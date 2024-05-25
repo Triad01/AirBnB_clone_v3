@@ -15,7 +15,7 @@ def tear_down(exception):
     storage.close()
 
 
-@app.errorhandler(404)
+@app.errorhandler
 def not_found(error):
     """ Returning custom error message """
     return jsonify({"error": "Not found"}), 404

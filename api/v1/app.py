@@ -14,6 +14,7 @@ app.register_blueprint(app_views)
 def tear_down(exception):
     storage.close()
 
+
 if __name__ == "__main__":
     host = os.getenv("HBNB_API_HOST")
     if host is None:
@@ -22,5 +23,4 @@ if __name__ == "__main__":
     port = os.getenv("HBNB_API_PORT")
     if port is None:
         port = '5000'
-
-    app.run(debug=True, host = host, port = port, threaded=True)
+    app.run(debug=True, host=host, port=port, threaded=True)

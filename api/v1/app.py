@@ -14,6 +14,7 @@ app.register_blueprint(app_views)
 def tear_down(exception):
     storage.close()
 
+
 @app.errorhandler(404)
 def not_found(error):
     """ Returning custom error message """

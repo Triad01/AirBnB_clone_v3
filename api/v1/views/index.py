@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 """index file of our flask application"""
-from flask import jsonify
+from flask import jsonify, request
 from api.v1.views import app_views
 from models import storage
 
@@ -11,18 +11,21 @@ def status():
     return jsonify({"status": "OK"})
 
 
-@app_views.route("/stats", methods=["GET"], strict_slashes=False)
+@app_views.route('/stats', methods=['GET'])
 def stats():
-    """ retrieves the number of each objects by type """
-    class_dict = {
-        "Amenity": "amenities",
-        "City": "cities",
-        "Place": "places",
-        "Review": "reviews",
-        "State": "states",
-        "User": "users"
-    }
-    objs = {class_dict[cls]: storage.count(cls) for cls in class_dict}
-    response = jsonify(objs)
-    response.status_code = 200
-    return response
+    """
+    function to return the count of all class objects
+    """
+    if request.method == 'GET':
+        response = {}
+        PLURALS = {
+            "Amenity": "amenities",
+            "City": "cities",
+            "Place": "places",
+            "Review": "reviews",
+            "State": "states",
+            "User": "users"
+        }
+        for key, value in PLURALS.items():
+            response[value] = storage.count(key)
+        return jsonify(response)

@@ -28,4 +28,6 @@ def stats():
         }
         for key, value in PLURALS.items():
             response[value] = storage.count(key)
-        return jsonify(response)
+        res = jsonify(response)
+        res.status_code = 200
+        return res

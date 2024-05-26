@@ -23,4 +23,6 @@ def stats():
         "User": "users"
     }
     objs = {class_dict[cls]: storage.count(cls) for cls in class_dict}
-    return jsonify(objs)
+    response = jsonify(objs)
+    response.status_code = 200
+    return response

@@ -72,10 +72,10 @@ def create_amenity():
     """
     if request.json is None:
         return "Not a JSON", 400
-    request_fields = request.get_json()
-    if request_fields.get('name') is None:
+    fields = request.get_json()
+    if fields.get('name') is None:
         return "Missing name", 400
-    new_amenity = Amenity(**request_fields)
+    new_amenity = Amenity(**fields)
     new_amenity.save()
     return jsonify(new_amenity.to_dict()), 201
 
@@ -99,13 +99,13 @@ def update_amenity(amenity_id=None):
     """
     if request.json is None:
         return "Not a JSON", 400
-    request_fields = request.get_json()
+    fields = request.get_json()
     amenity_obj = storage.get("Amenity", amenity_id)
     if amenity_obj is None:
         abort(404)
-    for key in request_fields:
+    for key in fields:
         if key not in ['id', 'created_at', 'updated_at']:
             if hasattr(amenity_obj, key):
-                setattr(amenity_obj, key, request_fields[key])
+                setattr(amenity_obj, key, fields[key])
     amenity_obj.save()
     return jsonify(amenity_obj.to_dict()), 200

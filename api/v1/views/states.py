@@ -1,71 +1,110 @@
 #!/usr/bin/python3
-"""module for creating state crud"""
-from models import storage
-from flask import jsonify, abort, request
-from models.state import State
+"""Module containing views for State objects """
 from api.v1.views import app_views
+from flask import jsonify, abort, request
+from models import storage
+from models.state import State
 
 
-@app_views.route("/states", methods=['GET'], strict_slashes=False)
-def getAllStates():
-    """get all states"""
-    states_store = []
-    all_states = storage.all("State")
-    for obj in all_states.values():
-        states_store.append(obj.to_dict())
-    return jsonify(states_store)
+@app_views.route('/states', methods=['GET'], strict_slashes=False)
+def get_states():
+    """
+    Retrieves the list of all State objects
+
+    Returns:
+        A list of dictionaries representing State Objects in JSON format.
+    """
+    states = []
+    for state in storage.all("State").values():
+        states.append(state.to_dict())
+    return jsonify(states)
 
 
-@app_views.route("/states/<state_id>", methods=['GET'], strict_slashes=False)
-def get_states_byid(state_id):
-    """get states by id"""
-    get_by_id = storage.get("State", state_id)
-    if get_by_id is None:
+@app_views.route('/states/<string:state_id>', methods=['GET'],
+                 strict_slashes=False)
+def get_state_by_id(state_id=None):
+    """ Retrieves a state object by state_id
+
+        Args:
+            state_id (str): The UUID4 string representing a State object.
+
+        Returns:
+            A state object in JSON format.
+            Raise 404 error if no match for state_id is found.
+    """
+    if state_id:
+        for state in storage.all("State").values():
+            if state.id == state_id:
+                return jsonify(state.to_dict())
         abort(404)
-    return jsonify(get_by_id.to_dict())
 
 
-@app_views.route("/states", methods=['POST'], strict_slashes=False)
-def create_state():
-    """create new state"""
-    state_json = request.get_json(silent=True)
-    if not state_json:
-        abort(400, 'Not a JSON')
-    if 'name' not in state_json:
-        abort(400, 'Missing name')
+@app_views.route('/states/<string:state_id>', methods=['DELETE'],
+                 strict_slashes=False)
+def delete_state_by_id(state_id=None):
+    """ Deletes a state object by state_id
 
-    created_state = State(**state_json)
-    created_state.save()
-    response = jsonify(created_state.to_dict())
-    response.status_code = 201
-    return response
+        Args:
+            state_id (str): The UUID4 string representing a State object.
 
-
-@app_views.route(
-        "/states/<state_id>", methods=['DELETE'], strict_slashes=False
-        )
-def delete_state(state_id):
-    """delete states by id"""
-    get_by_id = storage.get("State", state_id)
-    if get_by_id is None:
+        Returns:
+            An empty dictionary with the status code 200.
+            Raise 404 error if no match for state_id is found.
+    """
+    state_obj = storage.get("State", state_id)
+    if state_obj is None:
         abort(404)
-    storage.delete(get_by_id)
+    state_obj.delete()
     storage.save()
-    return jsonify({})
+    return jsonify({}), 200
 
 
-@app_views.route("/states/<state_id>", methods=['PUT'], strict_slashes=False)
-def update_state(state_id):
-    """update the state"""
-    get_by_id = storage.get("State", state_id)
-    if get_by_id is None:
+@app_views.route('/states', methods=['POST'], strict_slashes=False)
+def create_state():
+    """ Creates a state object
+
+        Returns:
+            A dictionary of the state object with status code 201.
+            If HTTP body request is not valid JSON, raise a 400 error with the
+                message "Not a JSON".
+            If dictionary doesn't contain the key name, raise a 400 error with
+                message "Missing name".
+    """
+    if request.json is None:
+        return "Not a JSON", 400
+    fields = request.get_json()
+    if fields.get('name') is None:
+        return "Missing name", 400
+    new_state = State(**fields)
+    new_state.save()
+    return jsonify(new_state.to_dict()), 201
+
+
+@app_views.route('/states/<string:state_id>', methods=['PUT'],
+                 strict_slashes=False)
+def update_state(state_id=None):
+    """ Updates a state object by state_id
+
+        Args:
+            state_id (str): The UUID4 string representing a State object.
+
+        Returns:
+            A state object in JSON format with the status code 200.
+            If no object with matching state_id is found, 404 error is raised.
+            If HTTP body request is not valid JSON, raise a 400 error with the
+                message "Not a JSON".
+            If dictionary doesn't contain the key name, raise a 400 error with
+                message "Missing name".
+    """
+    if request.json is None:
+        return "Not a JSON", 400
+    fields = request.get_json()
+    state_obj = storage.get("State", state_id)
+    if state_obj is None:
         abort(404)
-
-    state_json = request.get_json(silent=True)
-    if state_json is None:
-        abort(400, 'Not a JSON')
-    for key, val in state_json.items():
-        if key not in ["id", "created_at", "updated_at"]:
-            setattr(get_by_id, key, val)
-    get_by_id.save()
-    return jsonify(get_by_id.to_dict())
+    for key in fields:
+        if key not in ['id', 'created_at', 'updated_at']:
+            if hasattr(state_obj, key):
+                setattr(state_obj, key, fields[key])
+    state_obj.save()
+    return jsonify(state_obj.to_dict()), 200
